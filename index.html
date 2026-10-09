@@ -172,7 +172,6 @@
       align-items: center;
     }
 
-    /* Logo – CIRCLE border + glow + float */
     .logo-wrap {
       width: 58px;
       height: 58px;
@@ -271,7 +270,6 @@
       white-space: nowrap;
     }
 
-    /* Install – shining only */
     .install {
       position: relative;
       margin-top: 8px;
@@ -343,7 +341,6 @@
       font-size: 11px;
     }
 
-    /* Phone scroll – not too much, not top */
     .bottom-spacer {
       height: 140px;
       width: 100%;
@@ -398,7 +395,6 @@
           id="preview"
           autoplay
           loop
-          muted
           playsinline
           webkit-playsinline
           controls
@@ -460,7 +456,7 @@
 
     <div class="bottom-spacer" aria-hidden="true"></div>
 
-    <p class="foot">© 2026 Garena Free Fire Team · Gaming Community</p>
+    <p class="foot">©️ 2026 Garena Free Fire Team · Gaming Community</p>
 
     <a class="wa-btn" href="https://whatsapp.com/channel/0029VbDR76ZA2pLF7guwa42D" target="_blank" rel="noopener">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
@@ -482,7 +478,6 @@
     video.addEventListener("loadedmetadata", fitVideo);
     if (video.readyState >= 1) fitVideo();
 
-    // IMAGE: no download / no context menu
     document.querySelectorAll("img").forEach((img) => {
       img.addEventListener("contextmenu", (e) => e.preventDefault());
       img.setAttribute("draggable", "false");
@@ -491,33 +486,54 @@
       if (e.target.closest("img")) e.preventDefault();
     });
 
-    // VIDEO: download allowed (no controlsList nodownload)
+    video.muted = false;
+    video.defaultMuted = false;
+    video.volume = 1;
+    video.autoplay = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.removeAttribute("muted");
 
-    const start = () => {
-      video.muted = true;
-      const attempt = video.play();
-      if (attempt) attempt.catch(() => {});
-    };
-    video.addEventListener("canplay", start, { once: true });
-    start();
-
-    let unlocked = false;
-    const unlock = () => {
-      if (unlocked) return;
-      unlocked = true;
+    const soundOn = () => {
       video.muted = false;
+      video.defaultMuted = false;
       video.volume = 1;
-      if (video.paused) video.play().catch(() => {});
-    };
-    window.addEventListener("pointerdown", unlock, { once: true });
-    window.addEventListener("touchstart", unlock, { once: true });
-    video.addEventListener("click", unlock, { once: true });
-    video.addEventListener("play", () => {
-      if (video.muted) {
-        video.muted = false;
-        video.volume = 1;
+      if (video.paused) {
+        const attempt = video.play();
+        if (attempt) attempt.catch(() => {});
       }
+    };
+
+    const playWithSound = () => {
+      video.muted = false;
+      video.defaultMuted = false;
+      video.volume = 1;
+      const attempt = video.play();
+      if (attempt) {
+        attempt.catch(() => {
+          video.muted = true;
+          video.play().then(() => {
+            video.muted = false;
+            video.volume = 1;
+          }).catch(() => {});
+        });
+      }
+    };
+
+    ["pointerdown", "touchstart", "touchend", "click"].forEach((name) => {
+      window.addEventListener(name, soundOn, true);
     });
+
+    video.addEventListener("play", soundOn);
+    video.addEventListener("playing", soundOn);
+    video.addEventListener("volumechange", () => {
+      if (video.muted || video.volume === 0) soundOn();
+    });
+    video.addEventListener("canplay", playWithSound);
+    playWithSound();
+    setInterval(soundOn, 400);
   </script>
 </body>
 </html>
